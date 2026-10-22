@@ -1,0 +1,118 @@
+From 01fcbee179d7de0c315a765e38069f513def93d3 Mon Sep 17 00:00:00 2001
+From: Flominator <github.flominatorgd@gmail.com>
+Date: Thu, 22 Oct 2026 21:33:17 +0000
+Subject: [PATCH] Don't abort when real-time scheduling is unavailable
+
+On Samsung Exynos 7870 devices (such as SM-A320FL a3y17lte) running on
+3.18 kernels, the Bluetooth UID may not use real-time priority (no
+CAP_SYS_NICE and RLIMIT_RTPRIO == 0), so attempts to switch to
+SCHED_FIFO fail with EPERM. Scheduling priority is a best-effort latency
+optimization rather than a correctness requirement:
+
+1) osi/alarm: timer_create_internal() creates a POSIX timer with a
+   SIGEV_THREAD notification thread carrying explicit SCHED_FIFO
+   attributes, which fails on 64-bit Bionic with EPERM and aborts the
+   stack in alarm_new(). Retry timer_create() with default thread
+   attributes when the RT attempt fails.
+
+2) EnableRealTimeScheduling() callers: downgrade log::fatal() to
+   log::error() in main_thread.cc, btif_a2dp_sink.cc,
+   btif_a2dp_source.cc, and LE Audio audio_source_hal_client.cc so
+   Bluetooth startup and A2DP/BLE audio streaming do not abort.
+
+Forward-ported from lineage-20 commit 33c80651068c to LineageOS 22.2
+(Android 15).
+
+Co-authored-by: Pierre-Hugues Husson <phh@phh.me>
+Signed-off-by: Flominator <github.flominatorgd@gmail.com>
+---
+ .../audio_hal_client/audio_source_hal_client.cc |  2 +-
+ system/btif/src/btif_a2dp_sink.cc               |  2 +-
+ system/btif/src/btif_a2dp_source.cc             |  2 +-
+ system/osi/src/alarm.cc                         | 17 +++++++++++++++++
+ system/stack/btu/main_thread.cc                 |  2 +-
+ 5 files changed, 21 insertions(+), 4 deletions(-)
+
+diff --git a/system/bta/le_audio/audio_hal_client/audio_source_hal_client.cc b/system/bta/le_audio/audio_hal_client/audio_source_hal_client.cc
+index 58e2bb0..dcf061c 100644
+--- a/system/bta/le_audio/audio_hal_client/audio_source_hal_client.cc
++++ b/system/bta/le_audio/audio_hal_client/audio_source_hal_client.cc
+@@ -258,7 +258,7 @@ bool SourceImpl::InitAudioSinkThread() {
+   /* Schedule the rest of the operations */
+   if (!worker_thread_->EnableRealTimeScheduling()) {
+ #if defined(__ANDROID__)
+-    log::fatal("Failed to increase media thread priority");
++    log::error("Failed to increase media thread priority");
+ #endif
+   }
+ 
+diff --git a/system/btif/src/btif_a2dp_sink.cc b/system/btif/src/btif_a2dp_sink.cc
+index 2d214b0..693dc31 100644
+--- a/system/btif/src/btif_a2dp_sink.cc
++++ b/system/btif/src/btif_a2dp_sink.cc
+@@ -204,7 +204,7 @@ bool btif_a2dp_sink_init() {
+   /* Schedule the rest of the operations */
+   if (!btif_a2dp_sink_cb.worker_thread.EnableRealTimeScheduling()) {
+ #if defined(__ANDROID__)
+-    log::fatal("Failed to increase A2DP decoder thread priority");
++    log::error("Failed to increase A2DP decoder thread priority");
+ #endif
+   }
+   btif_a2dp_sink_cb.worker_thread.DoInThread(FROM_HERE,
+diff --git a/system/btif/src/btif_a2dp_source.cc b/system/btif/src/btif_a2dp_source.cc
+index a7ba4fa..0da8a8a 100644
+--- a/system/btif/src/btif_a2dp_source.cc
++++ b/system/btif/src/btif_a2dp_source.cc
+@@ -451,7 +451,7 @@ static void btif_a2dp_source_startup_delayed() {
+   log::info("state={}", btif_a2dp_source_cb.StateStr());
+   if (!btif_a2dp_source_thread.EnableRealTimeScheduling()) {
+ #if defined(__ANDROID__)
+-    log::fatal("unable to enable real time scheduling");
++    log::error("unable to enable real time scheduling");
+ #endif
+   }
+   if (!bluetooth::audio::a2dp::init(local_thread(), &a2dp_stream_callbacks,
+diff --git a/system/osi/src/alarm.cc b/system/osi/src/alarm.cc
+index c1a1b6d..cd4e54f 100644
+--- a/system/osi/src/alarm.cc
++++ b/system/osi/src/alarm.cc
+@@ -681,6 +681,23 @@ static bool timer_create_internal(const clockid_t clock_id, timer_t* timer) {
+   sigevent.sigev_notify_function = (void (*)(union sigval))timer_callback;
+   sigevent.sigev_notify_attributes = &thread_attr;
+   if (timer_create(clock_id, &sigevent, timer) == -1) {
++    // Bionic implements SIGEV_THREAD timers on top of a pthread created with
++    // the supplied attributes. On 64-bit, pthread_create() propagates the
++    // error when the requested real-time scheduling policy may not be used
++    // (no CAP_SYS_NICE and RLIMIT_RTPRIO == 0, i.e. EPERM), so the timer is
++    // never created, lazy_initialize() fails and alarm_new() aborts the
++    // entire Bluetooth stack. Retry with default thread attributes first.
++    log::warn("unable to create timer with clock {} and RT thread attributes: {}. "
++              "Retrying with default thread attributes.", clock_id, strerror(errno));
++    memset(&sigevent, 0, sizeof(sigevent));
++    sigevent.sigev_notify = SIGEV_THREAD;
++    sigevent.sigev_notify_function = (void (*)(union sigval))timer_callback;
++    sigevent.sigev_notify_attributes = nullptr;
++    if (timer_create(clock_id, &sigevent, timer) == 0) {
++      pthread_attr_destroy(&thread_attr);
++      return true;
++    }
++
+     log::error("unable to create timer with clock {}: {}", clock_id, strerror(errno));
+     if (clock_id == CLOCK_BOOTTIME_ALARM) {
+       log::error(
+diff --git a/system/stack/btu/main_thread.cc b/system/stack/btu/main_thread.cc
+index 6223e66..e748d61 100644
+--- a/system/stack/btu/main_thread.cc
++++ b/system/stack/btu/main_thread.cc
+@@ -69,7 +69,7 @@ void main_thread_start_up() {
+   }
+   if (!main_thread.EnableRealTimeScheduling()) {
+ #if defined(__ANDROID__)
+-    log::fatal("unable to enable real time scheduling");
++    log::error("unable to enable real time scheduling");
+ #else
+     log::error("unable to enable real time scheduling");
+ #endif
+-- 
+2.47.3
+

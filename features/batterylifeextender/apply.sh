@@ -3,7 +3,6 @@
 # Array of directories and corresponding patches
 declare -A patches=(
     ["device/lineage/sepolicy"]="device_lineage_sepolicy"
-    ["device/samsung/universal8890-common"]="device_samsung_universal8890-common"
     ["hardware/lineage/interfaces"]="hardware_lineage_interfaces"
     ["hardware/samsung"]="hardware_samsung"
     ["packages/apps/Settings"]="packages_apps_Settings"
