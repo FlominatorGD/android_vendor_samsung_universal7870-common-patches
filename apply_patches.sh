@@ -59,13 +59,7 @@ REPO_ROOT=$(find_repo_root)
 
 # Patch directory (relative to this repo) -> Android source path
 PATCH_DIRS=(
-    "build/make"
-    "frameworks/av"
-    "frameworks/native"
-    "hardware/interfaces"
     "packages/modules/Bluetooth"
-    "system/core"
-    "system/security"
 )
 
 extract_subject() {
