@@ -1,0 +1,41 @@
+From 9a4ffc7bb83a808da47acffdaefe5f4846a0e661 Mon Sep 17 00:00:00 2001
+From: Flominator <github.flominatorgd@gmail.com>
+Date: Fri, 23 Oct 2026 13:12:12 +0000
+Subject: [PATCH] soong: cc: globally disable Shadow Call Stack (SCS)
+
+Proprietary Mali-T830 OpenGL ES blobs (/vendor/lib64/egl/libGLES_mali.so)
+were compiled without -ffixed-x18 and execute 'mov x18, xzr', clobbering
+Android's ARM64 Shadow Call Stack pointer in x18 both during Zygote GL
+preload and whenever a 64-bit process initializes GLES. Any subsequent
+call into an SCS-instrumented library (such as libbluetooth_jni.so or
+libnfc_nci_jni.so) then crashes with SIGSEGV at 0x0.
+
+Disable SCS globally in cc/sanitize.go while keeping Zygote GL preload
+enabled.
+
+Signed-off-by: Flominator <github.flominatorgd@gmail.com>
+---
+ cc/sanitize.go | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/cc/sanitize.go b/cc/sanitize.go
+index d8d8c7a..9b20f87 100644
+--- a/cc/sanitize.go
++++ b/cc/sanitize.go
+@@ -640,10 +640,9 @@ func (sanitize *sanitize) begin(ctx BaseModuleContext) {
+ 		s.Hwaddress = nil
+ 	}
+ 
+-	// SCS is only implemented on AArch64/riscv64.
+-	if (ctx.Arch().ArchType != android.Arm64 && ctx.Arch().ArchType != android.Riscv64) || !ctx.toolchain().Bionic() {
+-		s.Scs = nil
+-	}
++	// Globally disable SCS: legacy Mali-T830 blobs (libGLES_mali.so) were
++	// built without -ffixed-x18 and clobber the ARM64 x18 SCS register.
++	s.Scs = nil
+ 
+ 	// Memtag_heap is only implemented on AArch64.
+ 	// Memtag ABI is Android specific for now, so disable for host.
+-- 
+2.47.3
+
