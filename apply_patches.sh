@@ -61,6 +61,7 @@ REPO_ROOT=$(find_repo_root)
 PATCH_DIRS=(
     "build/soong"
     "packages/modules/Bluetooth"
+    "system/memory/lmkd"
 )
 
 extract_subject() {
