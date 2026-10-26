@@ -1,0 +1,34 @@
+From b1d090832bdb997eb22e5beac5381869fb16365c Mon Sep 17 00:00:00 2001
+From: Flominator <github.flominatorgd@gmail.com>
+Date: Mon, 26 Oct 2026 20:02:30 +0000
+Subject: [PATCH] a3y17lte: Point Updater to Exynos7870-labs OTA channel
+
+Set lineage.updater.uri to the a3y17lte.json on the lineage-22.2 branch of Exynos7870-labs/lineage_release, whose GitHub Releases host the OTA zips. The stock Updater reads this property in Utils.getServerURL() before falling back to its built-in download.lineageos.org URL and substitutes {device} with ro.lineage.device.
+
+No Updater fork is needed for this. In-system OTA additionally requires all builds to be signed with the same private keys (vendor/lineage-priv/keys), otherwise recovery and package signature verification will reject the update.
+---
+ lineage_a3y17lte.mk | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/lineage_a3y17lte.mk b/lineage_a3y17lte.mk
+index 158bb37..c18ade6 100755
+--- a/lineage_a3y17lte.mk
++++ b/lineage_a3y17lte.mk
+@@ -53,3 +53,14 @@ PRODUCT_GMS_CLIENTID_BASE := android-samsung
+ 
+ TARGET_BOOT_ANIMATION_RES := 720
+ TARGET_GAPPS_ARCH := arm64
++
++# Updater: use the Exynos7870-labs OTA channel instead of the official
++# LineageOS servers. The stock Updater prefers the lineage.updater.uri
++# property over its built-in updater_server_url resource and replaces
++# {device} with ro.lineage.device, so it fetches:
++#   https://raw.githubusercontent.com/Exynos7870-labs/lineage_release/lineage-22.2/a3y17lte.json
++# The JSON (Updater v1 format) points at the OTA zip hosted in the
++# GitHub Releases of the same repository. OTA only works between
++# builds signed with the same (Exynos7870-labs) keys.
++PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
++    lineage.updater.uri=https://raw.githubusercontent.com/Exynos7870-labs/lineage_release/lineage-22.2/{device}.json
+-- 
+2.47.3
+
