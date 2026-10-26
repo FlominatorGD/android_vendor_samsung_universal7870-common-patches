@@ -1,0 +1,12 @@
+# Paranoia: signing material and build output must never end up in the
+# patches repo, even if files are dropped into the wrong directory.
+*.pk8
+*.pem
+*.avbpubkey
+*.pubkey
+*.keystore
+*.jks
+*.zip
+*.img
+.android-certs/
+vendor/lineage-priv/
