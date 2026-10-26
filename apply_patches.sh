@@ -61,6 +61,7 @@ REPO_ROOT=$(find_repo_root)
 PATCH_DIRS=(
     "build/soong"
     "device/samsung/a3y17lte"
+    "packages/apps/Updater"
     "packages/modules/Bluetooth"
 )
 
