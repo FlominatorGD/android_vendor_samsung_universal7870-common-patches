@@ -17,14 +17,26 @@ branch `lineage-22.2-bpf` **plus three commits on top**:
 
 ## How it gets into the build
 
-`FlominatorGD/private_manifest` (`zz-private.xml`) replaces exactly
-this one project in the public manifest:
+```bash
+mkdir ~/Los22 && cd ~/Los22
+repo init -u https://github.com/LineageOS/android.git -b lineage-22.2 --git-lfs
+git clone -b lineage-22.2 \
+  https://github.com/samsungexynos7870/android_manifest_samsung_a3y17lte.git \
+  .repo/local_manifests
 
-```xml
-<remove-project name="android_vendor_samsung_universal7870-common-patches" />
-<project name="android_vendor_samsung_universal7870-common-patches"
-         path="vendor/samsung/universal7870-common-patches"
-         remote="flominatorgd" revision="lineage-22.2-bpf-private" />
+# THE override — local file only, exactly as now documented upstream:
+cat > .repo/local_manifests/zz-a3y17lte-private.xml <<'EOF_MANIFEST'
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+    <remote name="flominatorgd" fetch="https://github.com/FlominatorGD" />
+    <remove-project name="android_vendor_samsung_universal7870-common-patches" />
+    <project name="android_vendor_samsung_universal7870-common-patches"
+             path="vendor/samsung/universal7870-common-patches"
+             remote="flominatorgd" revision="lineage-22.2-bpf-private" />
+</manifest>
+EOF_MANIFEST
+
+repo sync --force-sync --no-clone-bundle --no-tags
 ```
 
 Everything else — device tree, Updater app, kernel, vendor — comes
