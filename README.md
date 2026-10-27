@@ -32,7 +32,7 @@ cat > .repo/local_manifests/zz-a3y17lte-private.xml <<'EOF_MANIFEST'
     <remove-project name="android_vendor_samsung_universal7870-common-patches" />
     <project name="android_vendor_samsung_universal7870-common-patches"
              path="vendor/samsung/universal7870-common-patches"
-             remote="flominatorgd" revision="lineage-22.2-bpf-private" />
+             remote="flominatorgd" revision="lineage-22.2-bpf" />
 </manifest>
 EOF_MANIFEST
 
