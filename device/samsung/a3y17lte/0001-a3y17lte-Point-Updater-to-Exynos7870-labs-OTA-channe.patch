@@ -6,6 +6,8 @@ Subject: [PATCH] a3y17lte: Point Updater to Exynos7870-labs OTA channel
 Set lineage.updater.uri to the a3y17lte.json on the lineage-22.2 branch of Exynos7870-labs/lineage_release, whose GitHub Releases host the OTA zips. The stock Updater reads this property in Utils.getServerURL() before falling back to its built-in download.lineageos.org URL and substitutes {device} with ro.lineage.device.
 
 No Updater fork is needed for this. In-system OTA additionally requires all builds to be signed with the same private keys (vendor/lineage-priv/keys), otherwise recovery and package signature verification will reject the update.
+
+Signed-off-by: FlominatorGD <github.flominatorgd@gmail.com>
 ---
  lineage_a3y17lte.mk | 11 +++++++++++
  1 file changed, 11 insertions(+)

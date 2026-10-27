@@ -24,7 +24,7 @@ Forward-ported from lineage-20 commit 33c80651068c to LineageOS 22.2
 (Android 15).
 
 Co-authored-by: Pierre-Hugues Husson <phh@phh.me>
-Signed-off-by: Flominator <github.flominatorgd@gmail.com>
+Signed-off-by: FlominatorGD <github.flominatorgd@gmail.com>
 ---
  .../audio_hal_client/audio_source_hal_client.cc |  2 +-
  system/btif/src/btif_a2dp_sink.cc               |  2 +-

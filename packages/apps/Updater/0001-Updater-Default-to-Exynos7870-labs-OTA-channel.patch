@@ -6,6 +6,8 @@ Subject: [PATCH] Updater: Default to Exynos7870-labs OTA channel
 OPTIONAL fork-only change. Builds that set lineage.updater.uri (a3y17lte does, in its product makefile) do not need this: Utils.getServerURL() prefers that property over the updater_server_url resource.
 
 Keeping the default in sync anyway makes the fork behave correctly for devices that forget the property, and points the changelog menu at the GitHub Releases that actually host these unofficial builds instead of a non-existent official device page.
+
+Signed-off-by: FlominatorGD <github.flominatorgd@gmail.com>
 ---
  app/src/main/res/values/strings.xml | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
