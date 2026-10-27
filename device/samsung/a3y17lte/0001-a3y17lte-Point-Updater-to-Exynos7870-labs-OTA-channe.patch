@@ -30,7 +30,7 @@ index 158bb37..c18ade6 100755
 +# GitHub Releases of the same repository. OTA only works between
 +# builds signed with the same (Exynos7870-labs) keys.
 +PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
-+    lineage.updater.uri=https://raw.githubusercontent.com/Exynos7870-labs/lineage_release/lineage-22.2/{device}.json
++    lineage.updater.uri=https://raw.githubusercontent.com/Exynos7870-labs/lineage_release/22.2/{device}.json
 -- 
 2.47.3
 
