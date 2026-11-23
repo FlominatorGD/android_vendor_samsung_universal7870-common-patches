@@ -1,21 +1,28 @@
-# android_vendor_samsung_universal7870-common-patches — `lineage-22.2-bpf-private`
+# android_vendor_samsung_universal7870-common-patches — `lineage-22.2-bpf`
 
-Private patch set for the signed LineageOS 22.2 `a3y17lte`
-(Exynos7870) builds. It is the public
+Private patch set for the signed LineageOS 22.2 `a3y17lte` and
+`j5y17lte` (Exynos7870) builds. It is the public
 `samsungexynos7870/android_vendor_samsung_universal7870-common-patches`
-branch `lineage-22.2-bpf` **plus three commits on top**:
+branch `lineage-22.2-bpf` **plus four commits on top**:
 
 1. `device/samsung/a3y17lte/0001-…OTA-channe.patch` — sets
    `lineage.updater.uri` to
-   `https://raw.githubusercontent.com/Exynos7870-labs/lineage_release/lineage-22.2/{device}.json`.
+   `https://raw.githubusercontent.com/Exynos7870-labs/lineage_release/22.2/{device}.json`.
    This is the functional OTA switch (stock Updater prefers the
    property over its built-in server URL).
-2. `packages/apps/Updater/0001-…OTA-channel.patch` — aligns the
+2. `device/samsung/j5y17lte/0001-…OTA-channe.patch` — the same OTA
+   switch for j5y17lte, which fetches `j5y17lte.json` from that
+   channel.
+3. `packages/apps/Updater/0001-…OTA-channel.patch` — aligns the
    Updater app's built-in fallback URL/changelog with the same
    channel. Carried as a patch; **no Updater fork is maintained**.
-3. This README + `.gitignore` (commit 3).
+4. This README (commit 4, with `.gitignore`).
 
 ## How it gets into the build
+
+The block below shows the a3y17lte local manifest. A j5y17lte tree
+needs the same patches-repo entry (`…-patches`, remote `flominatorgd`,
+revision `lineage-22.2-bpf`) in its own manifest.
 
 ```bash
 mkdir ~/Los22 && cd ~/Los22
@@ -93,16 +100,16 @@ private `*.pem` anywhere — see the kit's `scripts/gen_keys_once.sh`.
 
 ## Keeping this branch current
 
-Keep the three private commits rebased on the public branch:
+Keep the four private commits rebased on the public branch:
 
 ```bash
 git remote add public https://github.com/samsungexynos7870/android_vendor_samsung_universal7870-common-patches.git  # once
 git fetch public lineage-22.2-bpf
-git checkout lineage-22.2-bpf-private
+git checkout lineage-22.2-bpf
 git rebase public/lineage-22.2-bpf
-git push --force-with-lease origin lineage-22.2-bpf-private
+git push --force-with-lease origin lineage-22.2-bpf
 ```
 
 If a rebase changes `apply_patches.sh` upstream, re-check that
-`device/samsung/a3y17lte` and `packages/apps/Updater` are still in
-`PATCH_DIRS`.
+`device/samsung/a3y17lte`, `device/samsung/j5y17lte` and
+`packages/apps/Updater` are still in `PATCH_DIRS`.
